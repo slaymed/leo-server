@@ -73,13 +73,12 @@ const login = async (req: Request, res: Response) => {
             username: user.username,
         });
 
-
         transporter.sendMail(
             {
                 from: process.env.MAILER_USER,
                 to: user.email,
                 subject: "Continue Sign in",
-                text: `http://localhost:3000/verify-token/${token}`,
+                text: `https://www.leowireless.co.uk/verify-token/${token}`,
             },
             (error, info) => {
                 if (error) {
