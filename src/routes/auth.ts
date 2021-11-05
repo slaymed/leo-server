@@ -7,9 +7,10 @@ import transporter from "../helpers/transport";
 import cookie from "cookie";
 import user from "../middleware/user";
 import auth from "../middleware/auth";
+import verifyToken from "../helpers/verifyToken";
 
 const register = async (req: Request, res: Response) => {
-    const { email, username } = req.body;
+    const { email, username, postCode } = req.body;
 
     try {
         let errors: any = {};
@@ -17,18 +18,24 @@ const register = async (req: Request, res: Response) => {
         // Validate Fields
         if (isEmpty(email)) errors.email = "Email must not be empty";
         if (isEmpty(username)) errors.username = "Username must not be empty";
+        if (isEmpty(postCode)) errors.postCode = "Post Code must not be empty";
 
         if (Object.keys(errors).length > 0) return res.status(500).json(errors);
 
         // Check if the user existe in DB
-        const user = await User.findOne({ email });
+        const emailUser = await User.findOne({ email });
+        const usernameUser = await User.findOne({ username });
 
-        if (user) return res.status(400).json({ email: "Email already taken" });
+        if (emailUser)
+            return res.status(400).json({ email: "Email already taken" });
+        if (usernameUser)
+            return res.status(400).json({ username: "Username already taken" });
 
         // Create the user
         const newUser = new User({
             email,
             username,
+            postCode,
         });
 
         // Validate syntax errors
@@ -38,20 +45,6 @@ const register = async (req: Request, res: Response) => {
 
         // save the user in the database
         await newUser.save();
-
-        // const token = generateToken(SlayerID);
-
-        // // Setting the token in cookie
-        // res.set(
-        //     "Set-Cookie",
-        //     cookie.serialize("token", token, {
-        //         httpOnly: true,
-        //         secure: process.env.NODE_ENV === "production",
-        //         sameSite: "strict",
-        //         maxAge: 24 * 60 * 60,
-        //         path: "/",
-        //     })
-        // );
 
         // return the User
         return res.json(newUser);
@@ -74,21 +67,19 @@ const login = async (req: Request, res: Response) => {
         // Find the user if exist
         const user = await User.findOne({ email });
 
-        if (!user) return res.status(404).json({ SlayerID: "User not Found" });
+        if (!user) return res.status(404).json({ general: "User not Found" });
 
         const token = generateToken({
-            email: user.email,
             username: user.username,
         });
 
-        console.log(token);
 
         transporter.sendMail(
             {
                 from: process.env.MAILER_USER,
                 to: user.email,
                 subject: "Continue Sign in",
-                text: `http://localhost:5000/api/auth/${token}`,
+                text: `http://localhost:3000/verify-token/${token}`,
             },
             (error, info) => {
                 if (error) {
@@ -110,18 +101,29 @@ const login = async (req: Request, res: Response) => {
 const finishLogin = async (req: Request, res: Response) => {
     const { token } = req.params;
 
-    res.set(
-        "Set-Cookie",
-        cookie.serialize("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 24 * 60 * 60,
-            path: "/",
-        })
-    );
+    try {
+        const { username }: any = verifyToken(token, process.env.JWT_SECRET!);
 
-    return res.json(token);
+        const syncedUser = await User.findOne({ username });
+
+        if (!syncedUser)
+            return res.status(400).json({ general: "Invalid or Expired Link" });
+
+        res.set(
+            "Set-Cookie",
+            cookie.serialize("token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+                maxAge: 24 * 60 * 60,
+                path: "/",
+            })
+        );
+
+        return res.json(syncedUser);
+    } catch (error) {
+        return res.status(500).json({ general: "Invalid or Expired Link" });
+    }
 };
 
 const me = (_: Request, res: Response) => {
@@ -135,6 +137,6 @@ router.post("/register", register);
 
 router.get("/me", user, auth, me);
 
-router.get("/:token", finishLogin);
+router.get("/verify-token/:token", finishLogin);
 
 export default router;

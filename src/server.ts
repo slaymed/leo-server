@@ -7,6 +7,9 @@ import dotenv from "dotenv";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
+// middleware
+import trim from "./middleware/trim";
+
 // Routes
 import authRoutes from "./routes/auth";
 
@@ -16,6 +19,7 @@ const app = express();
 
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(trim);
 app.use(cookieParser());
 app.use(
     cors({

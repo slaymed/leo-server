@@ -19,4 +19,8 @@ export default class User extends AppEntity {
     @Length(1, 255, { message: "Must not be empty" })
     @Column({ unique: true })
     email: string;
+
+    @Column()
+    @Length(3, 255, { message: "Must be at least 3 Char long" })
+    postCode: string;
 }
