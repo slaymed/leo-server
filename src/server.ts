@@ -23,7 +23,9 @@ app.use(trim);
 app.use(cookieParser());
 app.use(
     cors({
-        credentials: false,
+        credentials: true,
+        origin: "http://localhost:3000",
+        optionsSuccessStatus: 200,
     })
 );
 
