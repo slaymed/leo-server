@@ -21,13 +21,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(trim);
 app.use(cookieParser());
-app.use(
-    cors({
-        credentials: true,
-        origin: process.env.ORIGIN,
-        optionsSuccessStatus: 200,
-    })
-);
+app.use(cors());
 
 app.use(express.static("public"));
 
