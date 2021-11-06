@@ -55,7 +55,7 @@ const register = async (req: Request, res: Response) => {
 };
 
 const login = async (req: Request, res: Response) => {
-    const { email } = req.body;
+    const { email, link } = req.body;
     try {
         let errors: any = {};
 
@@ -78,7 +78,7 @@ const login = async (req: Request, res: Response) => {
                 from: process.env.MAILER_USER,
                 to: user.email,
                 subject: "Continue Sign in",
-                text: `https://www.leowireless.co.uk/verify-token/${token}`,
+                text: `${link}/verify-token/${token}`,
             },
             (error, info) => {
                 if (error) {
