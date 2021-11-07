@@ -79,7 +79,7 @@ const login = async (req: Request, res: Response) => {
                 to: user.email,
                 subject: "Continue Sign in",
                 text: `${
-                    link || "http://localhost:3000"
+                    link || "http://localhost:5000"
                 }/verify-token/${token}`,
             },
             (error, info) => {
