@@ -78,7 +78,9 @@ const login = async (req: Request, res: Response) => {
                 from: process.env.MAILER_USER,
                 to: user.email,
                 subject: "Continue Sign in",
-                text: `${link}/verify-token/${token}`,
+                text: `${
+                    link || "http://localhost:3000"
+                }/verify-token/${token}`,
             },
             (error, info) => {
                 if (error) {
