@@ -24,7 +24,7 @@ app.use(cookieParser());
 app.use(
     cors({
         credentials: true,
-        origin: "https://www.leowireless.co.uk",
+        origin: process.env.ORIGIN,
         optionsSuccessStatus: 200,
     })
 );

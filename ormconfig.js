@@ -11,12 +11,24 @@ module.exports = {
     database: process.env.DB_DATABASE,
     synchronize: DEVELOPMENT_ENV,
     logging: DEVELOPMENT_ENV,
-    entities: [rootDir + "/entities/**/*{.ts, .js}"],
-    migrations: [rootDir + "/migrations/**/*{.ts, .js}"],
-    subscribers: [rootDir + "/subscribers/**/*{.ts, .js}"],
+    entities: [
+        DEVELOPMENT_ENV
+            ? "src/entities/**/*{.ts, .js}"
+            : "build/entities/**/*.js",
+    ],
+    migrations: [
+        DEVELOPMENT_ENV
+            ? "src/migrations/**/*{.ts, .js}"
+            : "build/migrations/**/*.js",
+    ],
+    subscribers: [
+        DEVELOPMENT_ENV
+            ? "src/subscribers/**/*{.ts, .js}"
+            : "build/subscribers/**/*.js",
+    ],
     cli: {
-        entitiesDir: rootDir + "/entities",
-        migrationsDir: rootDir + "/migrations",
-        subscribersDir: rootDir + "/subscribers",
+        entitiesDir: `${rootDir}/entities`,
+        migrationsDir: `${rootDir}/migrations`,
+        subscribersDir: `${rootDir}/subscribers`,
     },
 };
