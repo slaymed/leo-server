@@ -15,7 +15,6 @@ jobs:
                       cd leo-server
                       git pull
                       npm install
-                      npm run build
                       npm run migration:run
                       pm2 restart server
                   host: ${{ secrets.HOST }}
