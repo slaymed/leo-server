@@ -43,6 +43,7 @@ export const checkAvailability = async (req: Request, res: Response) => {
   </block>
   <a name="address-reference" format="text">${addressReference}</a>
   <a name="css-database-code" format="text">${cssDatabaseCode}</a>
+  <a name="cli" format="text">01502575835</a>
 </Request>
   `;
 
@@ -62,26 +63,26 @@ export const checkAvailability = async (req: Request, res: Response) => {
         if (fastPlan) {
             const plan = await Plan.findOne({ PlanType: FAST });
 
-            if (!plan) return;
-
-            fastPlan.plan = plan;
-            plans.fastPlan = fastPlan;
+            if (plan) {
+                fastPlan.plan = plan;
+                plans.fastPlan = fastPlan;
+            }
         }
         if (superFastPlan) {
             const plan = await Plan.findOne({ PlanType: SUPER });
 
-            if (!plan) return;
-
-            superFastPlan.plan = plan;
-            plans.superFastPlan = superFastPlan;
+            if (plan) {
+                superFastPlan.plan = plan;
+                plans.superFastPlan = superFastPlan;
+            }
         }
         if (ultraFastPlan) {
             const plan = await Plan.findOne({ PlanType: ULTRA });
 
-            if (!plan) return;
-
-            ultraFastPlan.plan = plan;
-            plans.ultraFastPlan = ultraFastPlan;
+            if (plan) {
+                ultraFastPlan.plan = plan;
+                plans.ultraFastPlan = ultraFastPlan;
+            }
         }
 
         return res.json(plans);

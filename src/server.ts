@@ -28,7 +28,10 @@ app.use(express.static("public"));
 app.use(
     cors({
         credentials: true,
-        origin: process.env.ORIGIN,
+        origin:
+            process.env.NODE_ENV === "development"
+                ? process.env.DEV_ORIGIN
+                : process.env.ORIGIN,
         optionsSuccessStatus: 200,
     })
 );
