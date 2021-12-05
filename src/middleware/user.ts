@@ -17,12 +17,14 @@ export default async (req: Request, res: Response, next: NextFunction) => {
         // find the user
         const user: User | undefined = await User.findOne({ username });
 
+        if (!user) throw new Error("Unauthenticated");
+
         // attach the user to locals
         res.locals.user = user;
 
         return next();
     } catch (err) {
         console.log(err.message);
-        return res.status(401).json({ error: "Unathenticated" });
+        return res.status(401).json({ error: err.message });
     }
 };

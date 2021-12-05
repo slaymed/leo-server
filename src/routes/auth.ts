@@ -8,9 +8,10 @@ import cookie from "cookie";
 import user from "../middleware/user";
 import auth from "../middleware/auth";
 import verifyToken from "../helpers/verifyToken";
+import VerificationCode from "../entities/VerificationCode";
 
 const register = async (req: Request, res: Response) => {
-    const { email, username, postCode } = req.body;
+    const { email, username, ...rest } = req.body;
 
     try {
         let errors: any = {};
@@ -18,7 +19,6 @@ const register = async (req: Request, res: Response) => {
         // Validate Fields
         if (isEmpty(email)) errors.email = "Email must not be empty";
         if (isEmpty(username)) errors.username = "Username must not be empty";
-        if (isEmpty(postCode)) errors.postCode = "Post Code must not be empty";
 
         if (Object.keys(errors).length > 0) return res.status(500).json(errors);
 
@@ -35,7 +35,7 @@ const register = async (req: Request, res: Response) => {
         const newUser = new User({
             email,
             username,
-            postCode,
+            ...rest,
         });
 
         // Validate syntax errors
@@ -46,11 +46,127 @@ const register = async (req: Request, res: Response) => {
         // save the user in the database
         await newUser.save();
 
+        const verificationCode = new VerificationCode({
+            user: newUser,
+        });
+
+        await verificationCode.save();
+
+        transporter.sendMail(
+            {
+                from: process.env.MAILER_USER,
+                to: newUser.email,
+                subject: "Verify Your Account",
+                text: `Verification Code ${verificationCode.getCode()}`,
+            },
+            (error, info) => {
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log("Email sent: " + info.response);
+                }
+            }
+        );
+
         // return the User
         return res.json(newUser);
     } catch (err) {
         console.log(err);
-        return res.status(500).json("Somthing went wrong");
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+const verifyAccount = async (req: Request, res: Response) => {
+    const { verificationCode, username } = req.body;
+
+    try {
+        const user = await User.findOne({ username });
+
+        if (!user) return res.status(404).json({ user: "User Not Found" });
+
+        if (user.checkVerification())
+            return res
+                .status(500)
+                .json({ general: "Your Account is Already Verified" });
+
+        const syncedVerificationCode = await VerificationCode.findOne({ user });
+
+        if (!syncedVerificationCode)
+            return res
+                .status(404)
+                .json({ verificationCode: "Verification Code Not Found" });
+
+        if (verificationCode !== syncedVerificationCode.getCode())
+            return res
+                .status(401)
+                .json({ verificationCode: "Verification Code Not Valid" });
+
+        user.verifyAccount();
+
+        await user.save();
+
+        await syncedVerificationCode.remove();
+
+        const token = generateToken({
+            username: user.username,
+        });
+
+        res.set(
+            "Set-Cookie",
+            cookie.serialize("token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+                maxAge: 60 * 60 * 24,
+                path: "/",
+            })
+        );
+
+        return res.json(user);
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+const resendVerificationCode = async (req: Request, res: Response) => {
+    const { username } = req.body;
+
+    try {
+        const user = await User.findOne({ username });
+
+        if (!user) return res.status(404).json({ user: "User Not Found" });
+
+        if (user.checkVerification())
+            return res
+                .status(500)
+                .json({ general: "Your Account is Already Verified" });
+
+        const syncedVerificationCode = await VerificationCode.findOne({ user });
+
+        if (!syncedVerificationCode)
+            return res
+                .status(404)
+                .json({ verificationCode: "Verification Code Not Found" });
+
+        transporter.sendMail(
+            {
+                from: process.env.MAILER_USER,
+                to: user.email,
+                subject: "Verify Your Account",
+                text: `Verification Code ${syncedVerificationCode.getCode()}`,
+            },
+            (error, info) => {
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log("Email sent: " + info.response);
+                }
+            }
+        );
+
+        return res.json({ success: true });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -79,7 +195,7 @@ const login = async (req: Request, res: Response) => {
                 to: user.email,
                 subject: "Continue Sign in",
                 text: `${
-                    link || "http://localhost:5000"
+                    link || "http://localhost:5000/api/auth"
                 }/verify-token/${token}`,
             },
             (error, info) => {
@@ -92,7 +208,7 @@ const login = async (req: Request, res: Response) => {
         );
 
         // return the user
-        return res.json(user);
+        return res.json({ success: true, user });
     } catch (err) {
         console.log(err);
         return res.status(500).json({ errors: err });
@@ -116,7 +232,7 @@ const finishLogin = async (req: Request, res: Response) => {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "strict",
-                maxAge: 24 * 60 * 60,
+                maxAge: 60 * 60 * 24,
                 path: "/",
             })
         );
@@ -135,9 +251,12 @@ const router = Router();
 
 router.post("/login", login);
 router.post("/register", register);
+router.post("/verifyAccount", verifyAccount);
 
 router.get("/me", user, auth, me);
 
 router.get("/verify-token/:token", finishLogin);
+
+router.post("/resendVerificationCode", resendVerificationCode);
 
 export default router;

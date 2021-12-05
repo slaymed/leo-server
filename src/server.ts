@@ -12,6 +12,9 @@ import trim from "./middleware/trim";
 
 // Routes
 import authRoutes from "./routes/auth";
+import boardbandRoutes from "./routes/boardband";
+import dateRoutes from "./routes/date";
+import gocardlessRoutes from "./routes/gocardless";
 
 dotenv.config();
 
@@ -21,17 +24,19 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(trim);
 app.use(cookieParser());
+app.use(express.static("public"));
 app.use(
     cors({
         credentials: true,
-        origin: process.env.ORIGIN,
+        origin: "http://localhost:3000" || process.env.ORIGIN,
         optionsSuccessStatus: 200,
     })
 );
 
-app.use(express.static("public"));
-
 app.use("/api/auth", authRoutes);
+app.use("/api", boardbandRoutes);
+app.use("/api", dateRoutes);
+app.use("/api/auth", gocardlessRoutes);
 
 app.get("/", async (_, res) => res.send("Hello world"));
 

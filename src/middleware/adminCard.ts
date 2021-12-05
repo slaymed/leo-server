@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 
-import User from "../entities/User";
+import Admin from "../entities/Admin";
 
 export default async (_: Request, res: Response, next: NextFunction) => {
     try {
-        const user: User | undefined = res.locals.user;
+        const admin: Admin | undefined = res.locals.admin;
 
-        if (!user) throw new Error("Unathenticated");
+        if (!admin) throw new Error("Need Admin Permission");
 
         return next();
     } catch (err) {
