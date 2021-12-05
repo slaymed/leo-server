@@ -43,7 +43,6 @@ export const checkAvailability = async (req: Request, res: Response) => {
   </block>
   <a name="address-reference" format="text">${addressReference}</a>
   <a name="css-database-code" format="text">${cssDatabaseCode}</a>
-  <a name="cli" format="text">01502575835</a>
 </Request>
   `;
 
@@ -57,8 +56,6 @@ export const checkAvailability = async (req: Request, res: Response) => {
 
         const { fastPlan, superFastPlan, ultraFastPlan } =
             filterNetworks(xmlResponse);
-
-        console.log("xx");
 
         let plans: any = {};
 

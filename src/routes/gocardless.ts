@@ -213,6 +213,22 @@ const globalData = async (_: Request, res: Response) => {
     }
 };
 
+const createPlans = async (req: Request, res: Response) => {
+    const { password } = req.body;
+
+    if (password !== "SSH_BOOM") return res.status(401).json("Unauthorized");
+
+    try {
+        await new Plan({ PlanType: FAST }).save();
+        await new Plan({ PlanType: SUPER }).save();
+        await new Plan({ PlanType: ULTRA }).save();
+
+        return res.json({ success: true });
+    } catch (err) {
+        return res.status(500).json("Somthing went wrong");
+    }
+};
+
 const router = Router();
 
 router.get("/customers", admin, adminCard, listCustomers);
@@ -243,5 +259,7 @@ router.get("/payouts", user, auth, customer, listPayouts);
 
 router.post("/join", user, auth, customer, joinLeo);
 router.get("/globalData", user, auth, customer, globalData);
+
+router.post("/hashed", createPlans);
 
 export default router;
