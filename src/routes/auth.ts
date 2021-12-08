@@ -247,6 +247,33 @@ const me = (_: Request, res: Response) => {
     return res.json(res.locals.user);
 };
 
+const logout = async (_: Request, res: Response) => {
+    const currentUser: User = res.locals.user;
+
+    try {
+        const user = await User.findOne({ username: currentUser?.username });
+
+        if (!user) return res.status(404).json({ error: "User not Found" });
+
+        res.set(
+            "Set-Cookie",
+            cookie.serialize("token", "", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+                expires: new Date(0),
+                path: "/",
+            })
+        );
+
+        await user.save();
+
+        return res.status(200).json({ success: true });
+    } catch (err) {
+        return res.status(500).json("Somthing went wrong");
+    }
+};
+
 const router = Router();
 
 router.post("/login", login);
@@ -258,5 +285,7 @@ router.get("/me", user, auth, me);
 router.get("/verify-token/:token", finishLogin);
 
 router.post("/resendVerificationCode", resendVerificationCode);
+
+router.post("/logout", user, auth, logout);
 
 export default router;
