@@ -130,7 +130,7 @@ const joinLeo = async (req: Request, res: Response) => {
         const payment = await client.payments.create({
             amount: order.price,
             currency: "GBP",
-            description: "Joining leo Boardband",
+            description: "Broadband set-up",
             metadata: {
                 username: user.username,
             },
